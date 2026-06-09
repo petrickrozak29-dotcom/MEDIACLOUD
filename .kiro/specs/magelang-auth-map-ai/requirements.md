@@ -6,6 +6,15 @@ Dokumen ini merupakan specifikasi requirement dari ketiga fitur utama untuk apli
 
 Target Users: Pengunjung umum website Magelang yang ingin mengeksplorasi destinasi wisata, budaya, dan kuliner.
 
+## Glossary
+
+- **JWT (JSON Web Token)**: Token berbasis JSON untuk autentikasi dan otorisasi pengguna
+- **Haversine Formula**: Algoritma perhitungan jarak antar dua titik geografis
+- **TOTP (Time-based One-Time Password)**: Metode 2FA berbasis waktu untuk verifikasi pengguna
+- **Geolocation**: Penentuan lokasi geografis pengguna berbasis GPS atau WiFi
+- **Itinerary**: Rencana perjalanan dengan daftar destinasi, waktu, dan urutan kunjungan
+- **AI Assistant**: Sistem rekomendasi berbasis artificial intelligence (OpenAI GPT)
+
 ## Requirements
 
 ### Requirement 1: User Registration dengan Email & Password

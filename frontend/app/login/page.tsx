@@ -1,109 +1,74 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '../../contexts/AuthContext';
 import Navbar from '../../components/navbar';
 import Footer from '../../components/footer';
 import GradientBg from '../../components/gradient-bg';
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL ||
-  'https://keen-warmth-production-2f2b.up.railway.app';
-
 export default function LoginPage() {
   const router = useRouter();
+  const { login, register } = useAuth();
 
   const [mode, setMode] = useState<'login' | 'register'>('login');
-
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
 
   const [status, setStatus] = useState('');
-  const [locationStatus, setLocationStatus] = useState('Mencari lokasi Anda...');
-  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  // 🔹 Ambil data lama + lokasi
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
+  // Password strength validation
+  const validatePasswordStrength = (pwd: string): string | null => {
+    if (pwd.length < 8) return 'Password harus minimal 8 karakter';
+    if (!/[A-Z]/.test(pwd)) return 'Password harus mengandung huruf besar';
+    if (!/[a-z]/.test(pwd)) return 'Password harus mengandung huruf kecil';
+    if (!/\d/.test(pwd)) return 'Password harus mengandung angka';
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(pwd)) return 'Password harus mengandung karakter spesial';
+    return null;
+  };
 
-    const token = localStorage.getItem('token');
-    if (token) {
-      router.push('/'); // sudah login → redirect
-    }
-
-    const storedUser = localStorage.getItem('magelangverse-user');
-    if (storedUser) {
-      try {
-        const parsed = JSON.parse(storedUser);
-        if (parsed.name) setName(parsed.name);
-        if (parsed.email) setEmail(parsed.email);
-      } catch {}
-    }
-
-    if ('geolocation' in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const coords = {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude
-          };
-          setUserLocation(coords);
-          setLocationStatus('Lokasi Anda terdeteksi.');
-        },
-        () => {
-          setLocationStatus('Izin lokasi ditolak.');
-        }
-      );
-    } else {
-      setLocationStatus('Geolocation tidak tersedia.');
-    }
-  }, [router]);
-
-  // 🔹 HANDLE SUBMIT
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setStatus('Memproses...');
+    setStatus('');
+    setLoading(true);
 
     try {
-      const endpoint =
-        mode === 'login' ? '/api/auth/login' : '/api/auth/register';
+      if (mode === 'register') {
+        // Validate password strength
+        const passwordError = validatePasswordStrength(password);
+        if (passwordError) {
+          setStatus(passwordError);
+          setLoading(false);
+          return;
+        }
 
-      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name,
-          email,
-          password,
-          latitude: userLocation?.lat,
-          longitude: userLocation?.lng
-        })
-      });
+        // Validate confirm password
+        if (password !== confirmPassword) {
+          setStatus('Password tidak cocok');
+          setLoading(false);
+          return;
+        }
 
-      if (!response.ok) throw new Error('Gagal');
+        if (!name.trim()) {
+          setStatus('Nama harus diisi');
+          setLoading(false);
+          return;
+        }
 
-      const data = await response.json();
-
-      // 🔹 Simpan token
-      localStorage.setItem('token', data.token);
-
-      // 🔹 Simpan profil
-      localStorage.setItem(
-        'magelangverse-user',
-        JSON.stringify({
-          name: data.user.name,
-          email: data.user.email,
-          latitude: data.user.latitude,
-          longitude: data.user.longitude
-        })
-      );
-
-      setStatus('Berhasil! Redirecting...');
-      setTimeout(() => router.push('/'), 1500);
-    } catch (err) {
-      setStatus('Gagal. Cek email/password atau server.');
-      console.error(err);
+        await register(name, email, password);
+        setStatus('Registrasi berhasil! Redirecting...');
+        setTimeout(() => router.push('/smart-map'), 1500);
+      } else {
+        await login(email, password);
+        setStatus('Login berhasil! Redirecting...');
+        setTimeout(() => router.push('/smart-map'), 1500);
+      }
+    } catch (err: any) {
+      setStatus(err.message || 'Terjadi kesalahan. Silakan coba lagi.');
+      setLoading(false);
     }
   };
 
@@ -145,7 +110,7 @@ export default function LoginPage() {
                 placeholder="Nama"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full p-3 rounded-xl bg-slate-800"
+                className="w-full p-3 rounded-xl bg-slate-800 text-white"
                 required
               />
             )}
@@ -155,7 +120,7 @@ export default function LoginPage() {
               placeholder="Email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full p-3 rounded-xl bg-slate-800"
+              className="w-full p-3 rounded-xl bg-slate-800 text-white"
               required
             />
 
@@ -164,26 +129,60 @@ export default function LoginPage() {
               placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full p-3 rounded-xl bg-slate-800"
+              className="w-full p-3 rounded-xl bg-slate-800 text-white"
               required
             />
 
-            {/* LOKASI */}
-            <div className="p-4 bg-slate-800 rounded-xl">
-              <p>{locationStatus}</p>
-              {userLocation && (
-                <p className="text-sm text-gray-400">
-                  {userLocation.lat.toFixed(4)}, {userLocation.lng.toFixed(4)}
-                </p>
-              )}
-            </div>
+            {mode === 'register' && (
+              <>
+                <input
+                  type="password"
+                  placeholder="Konfirmasi Password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full p-3 rounded-xl bg-slate-800 text-white"
+                  required
+                />
+                <div className="text-sm text-gray-400 space-y-1">
+                  <p>Password harus memiliki:</p>
+                  <ul className="list-disc list-inside pl-4">
+                    <li>Minimal 8 karakter</li>
+                    <li>Huruf besar dan kecil</li>
+                    <li>Angka</li>
+                    <li>Karakter spesial (!@#$%^&*)</li>
+                  </ul>
+                </div>
+              </>
+            )}
 
-            <button className="w-full bg-cyan-500 py-3 rounded-full font-bold text-black">
-              {mode === 'login' ? 'Login' : 'Register'}
+            <button 
+              type="submit"
+              disabled={loading}
+              className="w-full bg-cyan-500 py-3 rounded-full font-bold text-black hover:bg-cyan-400 transition disabled:opacity-50"
+            >
+              {loading ? 'Memproses...' : (mode === 'login' ? 'Login' : 'Register')}
             </button>
 
-            <p className="text-sm text-gray-400">{status}</p>
+            {status && (
+              <p className={`text-sm ${status.includes('berhasil') ? 'text-green-400' : 'text-red-400'}`}>
+                {status}
+              </p>
+            )}
           </form>
+
+          <div className="mt-6 text-sm text-gray-400">
+            <p>
+              {mode === 'login' 
+                ? 'Belum punya akun? ' 
+                : 'Sudah punya akun? '}
+              <button 
+                onClick={() => setMode(mode === 'login' ? 'register' : 'login')}
+                className="text-cyan-400 hover:underline"
+              >
+                {mode === 'login' ? 'Register' : 'Login'}
+              </button>
+            </p>
+          </div>
         </section>
       </main>
       <Footer />

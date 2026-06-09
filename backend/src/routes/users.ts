@@ -19,8 +19,8 @@ router.post('/', (req, res) => {
     id: existingUserIndex >= 0 ? usersData[existingUserIndex].id : usersData.length + 1,
     name,
     email,
-    latitude: typeof latitude === 'number' ? latitude : null,
-    longitude: typeof longitude === 'number' ? longitude : null,
+    latitude: typeof latitude === 'number' ? latitude : 0,
+    longitude: typeof longitude === 'number' ? longitude : 0,
     savedAt: new Date().toISOString()
   };
 

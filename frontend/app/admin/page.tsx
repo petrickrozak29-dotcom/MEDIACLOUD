@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '../../contexts/AuthContext';
 import Navbar from '../../components/navbar';
 
 interface EventItem {
@@ -12,15 +14,30 @@ interface EventItem {
 }
 
 export default function AdminPage() {
+  const router = useRouter();
+  const { user, token, isAuthenticated, loading } = useAuth();
+
   const [events, setEvents] = useState<EventItem[]>([]);
   const [formState, setFormState] = useState({
     title: '',
     date: '',
     location: '',
-    description: ''
+    description: '',
   });
   const [status, setStatus] = useState('');
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://keen-warmth-production-2f2b.up.railway.app';
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+
+  // Redirect if not authenticated or not admin
+  useEffect(() => {
+    if (loading) return;
+    if (!isAuthenticated) {
+      router.push('/login');
+      return;
+    }
+    if (user?.role !== 'ADMIN') {
+      router.push('/');
+    }
+  }, [isAuthenticated, user, loading, router]);
 
   const fetchEvents = async () => {
     try {
@@ -33,8 +50,10 @@ export default function AdminPage() {
   };
 
   useEffect(() => {
-    fetchEvents();
-  }, []);
+    if (isAuthenticated && user?.role === 'ADMIN') {
+      fetchEvents();
+    }
+  }, [isAuthenticated, user]);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -42,16 +61,17 @@ export default function AdminPage() {
 
     const payload = {
       ...formState,
-      image: '/images/event-placeholder.jpg'
+      image: '/images/event-placeholder.jpg',
     };
 
     try {
       const response = await fetch(`${API_BASE_URL}/api/events`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
@@ -67,12 +87,31 @@ export default function AdminPage() {
     }
   };
 
+  // Show loading or access denied while checking auth
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
+        <p className="text-slate-400">Memuat...</p>
+      </main>
+    );
+  }
+
+  if (!isAuthenticated || user?.role !== 'ADMIN') {
+    return (
+      <main className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
+        <p className="text-red-400">Akses ditolak. Hanya admin yang dapat mengakses halaman ini.</p>
+      </main>
+    );
+  }
+
   return (
     <main className="min-h-screen bg-slate-950 text-white">
       <Navbar />
       <section className="mx-auto max-w-6xl px-6 py-16">
         <h1 className="text-4xl font-bold">Dashboard Admin</h1>
-        <p className="mt-4 max-w-2xl text-slate-300">Kelola event Magelang untuk Smart Tourism & Smart City Portal.</p>
+        <p className="mt-4 max-w-2xl text-slate-300">
+          Kelola event Magelang untuk Smart Tourism & Smart City Portal.
+        </p>
 
         <div className="mt-10 grid gap-10 lg:grid-cols-[1.1fr_0.9fr]">
           <div className="rounded-3xl border border-slate-800 bg-slate-900 p-6">
@@ -122,7 +161,10 @@ export default function AdminPage() {
                 />
               </label>
 
-              <button type="submit" className="rounded-full bg-cyan-500 px-6 py-3 font-semibold text-slate-950 hover:bg-cyan-400">
+              <button
+                type="submit"
+                className="rounded-full bg-cyan-500 px-6 py-3 font-semibold text-slate-950 hover:bg-cyan-400"
+              >
                 Simpan Event
               </button>
             </form>
@@ -140,6 +182,9 @@ export default function AdminPage() {
                   <p className="mt-2 text-slate-300">{item.description}</p>
                 </article>
               ))}
+              {events.length === 0 && (
+                <p className="text-slate-500 text-sm">Belum ada event.</p>
+              )}
             </div>
           </div>
         </div>

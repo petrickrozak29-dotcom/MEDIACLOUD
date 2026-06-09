@@ -34,6 +34,7 @@ export const culinaryData = [
     rating: 4.8,
     latitude: -7.4725,
     longitude: 110.2170,
+    category: 'Traditional Food',
     image: '/images/getuk-trio.jpg'
   },
   {
@@ -44,7 +45,52 @@ export const culinaryData = [
     rating: 4.6,
     latitude: -7.4812,
     longitude: 110.2229,
+    category: 'Traditional Food',
     image: '/images/kupat-tahu.jpg'
+  },
+  {
+    id: 3,
+    name: 'Kopi Klotok Magelang',
+    description: 'Coffee shop tradisional dengan kopi khas Magelang yang diseduh di atas tungku klotok.',
+    priceRange: 'Rp 15.000 - Rp 35.000',
+    rating: 4.7,
+    latitude: -7.4750,
+    longitude: 110.2200,
+    category: 'Coffee Shop',
+    image: '/images/kopi-klotok.jpg'
+  },
+  {
+    id: 4,
+    name: 'Ngopi Santai Café',
+    description: 'Coffee shop modern dengan nuansa cozy dan menu kopi specialty.',
+    priceRange: 'Rp 25.000 - Rp 50.000',
+    rating: 4.8,
+    latitude: -7.4700,
+    longitude: 110.2150,
+    category: 'Coffee Shop',
+    image: '/images/ngopi-santai.jpg'
+  },
+  {
+    id: 5,
+    name: 'Café Borobudur View',
+    description: 'Coffee shop dengan pemandangan Borobudur, menyajikan kopi lokal dan internasional.',
+    priceRange: 'Rp 30.000 - Rp 60.000',
+    rating: 4.9,
+    latitude: -7.6050,
+    longitude: 110.2100,
+    category: 'Coffee Shop',
+    image: '/images/cafe-borobudur.jpg'
+  },
+  {
+    id: 6,
+    name: 'Warung Kopi Pak Dhe',
+    description: 'Warung kopi sederhana dengan rasa autentik dan harga terjangkau.',
+    priceRange: 'Rp 5.000 - Rp 15.000',
+    rating: 4.5,
+    latitude: -7.4800,
+    longitude: 110.2250,
+    category: 'Coffee Shop',
+    image: '/images/kopi-pakdhe.jpg'
   }
 ];
 
